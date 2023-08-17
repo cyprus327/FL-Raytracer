@@ -1,6 +1,6 @@
-# FL-Raytracer
+# Raytracer
 
-A raytracer made with Fraglib. Not realtime, images seen below are the result of a minute or two of accumulation.
+A raytracer made with Fraglib in C#. Not realtime as everything is done on the CPU, images seen below are the result of a minute or two of accumulation.
 
 ![image](https://github.com/cyprus327/FL-Raytracer/assets/76965606/878516d3-050b-42f2-bb7d-cb3b57ee45fa)
 
