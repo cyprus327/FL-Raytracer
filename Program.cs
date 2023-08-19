@@ -7,14 +7,11 @@ internal sealed class Raytracer {
     private static float pitch = 0f, yaw = 0f;
     private const float MAX_PITCH = MathF.PI * 0.49f;
 
+    private static bool renderNormals = true;
+
     private static readonly Sphere[] _spheres = {
         new Sphere() {
-            Pos = new(0.4f, -0.35f, -0.35f),
-            Radius = 0.35f,
-            MatInd = 0
-        },
-        new Sphere() {
-            Pos = new(-0.4f, -0.35f, -0.35f),
+            Pos = new(-0.1f, -0.35f, -1.1f),
             Radius = 0.35f,
             MatInd = 1
         },
@@ -52,30 +49,30 @@ internal sealed class Raytracer {
 
     private static readonly AABB[] _aabbs = {
         new AABB() {
-            Min = new(1.2f, 0f, -0.6f),
-            Max = new(0.6f, -2f, -1.2f),
+            Min = new(0.9f, 0.1f, -0.6f),
+            Max = new(1.1f, -1.5f, 0.4f),
             MatInd = 0
         },
         new AABB() {
-            Min = new(-1.2f, 0f, -0.6f),
-            Max = new(-0.6f, -2f, -1.2f),
-            MatInd = 1
+            Min = new(-0.9f, 0.1f, 0.6f),
+            Max = new(-1.1f, -1.5f, -0.4f),
+            MatInd = 0
         }
     };
 
     private static readonly Material[] _materials = {
         new Material() {
-            Albedo = new(0.62f, 0.87f, 0.64f),
+            Albedo = new(0.95f, 0.71f, 0.76f),
             Metallic = 0.9f,
             Roughness = 0.1f,
         },
         new Material() {
-            Albedo = new(0.95f, 0.91f, 0.55f),
+            Albedo = new(0.62f, 0.87f, 0.64f),
             Metallic = 0.5f,
             Roughness = 0.5f,
         },
         new Material() {
-            Albedo = new(0.95f, 0.71f, 0.76f),
+            Albedo = new(0.95f, 0.91f, 0.55f),
             Metallic = 0.1f,
             Roughness = 0.9f,
         },
@@ -97,7 +94,7 @@ internal sealed class Raytracer {
         new Material() {
             Albedo = Vector3.One,
             EmissionStrength = 1f
-        },
+        }
     };
 
     public static void Main() {
@@ -105,13 +102,14 @@ internal sealed class Raytracer {
         Vector3 referencePoint = new(0f, -1.25f, 0f);
         Vector3 rotationAxis = Vector3.Normalize(referencePoint - centerPoint);
 
-        Matrix4x4 rotMat = Matrix4x4.CreateFromAxisAngle(rotationAxis, MathF.PI / 9f);
+        Matrix4x4 rotMat = Matrix4x4.CreateFromAxisAngle(rotationAxis, MathF.PI / 4f);
 
+        _spheres[2].Pos = Vector3.Transform(_spheres[2].Pos - centerPoint, rotMat) + centerPoint;
         _spheres[3].Pos = Vector3.Transform(_spheres[3].Pos - centerPoint, rotMat) + centerPoint;
         _spheres[4].Pos = Vector3.Transform(_spheres[4].Pos - centerPoint, rotMat) + centerPoint;
         _spheres[5].Pos = Vector3.Transform(_spheres[5].Pos - centerPoint, rotMat) + centerPoint;
-        _spheres[6].Pos = Vector3.Transform(_spheres[6].Pos - centerPoint, rotMat) + centerPoint;
 
+        FL.VSync = false;
         FL.Init(800, 450, "Raytracer", PerPixel, PerFrame);
         FL.Run();
     }
@@ -127,23 +125,38 @@ internal sealed class Raytracer {
         pitch = Math.Clamp(pitch, -MAX_PITCH, MAX_PITCH);
         FL.Accumulate = false;
 
-        float moveSpeed = FL.GetKeyDown(' ') ? 5f : 1f;
-
+        const float SPEED = 2f;
         yawPitchMatrix = Matrix4x4.CreateFromYawPitchRoll(yaw, pitch, 0f);
         if (FL.GetKeyDown('W')) {
-            camPos += moveSpeed * Vector3.Transform(-Vector3.UnitZ, yawPitchMatrix) * FL.DeltaTime;
+            camPos += SPEED * Vector3.Transform(-Vector3.UnitZ, yawPitchMatrix) * FL.DeltaTime;
         } else if (FL.GetKeyDown('S')) {
-            camPos += moveSpeed * Vector3.Transform(Vector3.UnitZ, yawPitchMatrix) * FL.DeltaTime;
+            camPos += SPEED * Vector3.Transform(Vector3.UnitZ, yawPitchMatrix) * FL.DeltaTime;
         }
         if (FL.GetKeyDown('A')) {
-            camPos += moveSpeed * Vector3.Transform(-Vector3.UnitX, yawPitchMatrix) * FL.DeltaTime;
+            camPos += SPEED * Vector3.Transform(-Vector3.UnitX, yawPitchMatrix) * FL.DeltaTime;
         } else if (FL.GetKeyDown('D')) {
-            camPos += moveSpeed * Vector3.Transform(Vector3.UnitX, yawPitchMatrix) * FL.DeltaTime;
+            camPos += SPEED * Vector3.Transform(Vector3.UnitX, yawPitchMatrix) * FL.DeltaTime;
         }
         if (FL.GetKeyDown('Q')) {
-            camPos.Y += moveSpeed * FL.DeltaTime;
+            camPos.Y += SPEED * FL.DeltaTime;
         } else if (FL.GetKeyDown('E')) {
-            camPos.Y -= moveSpeed * FL.DeltaTime;
+            camPos.Y -= SPEED * FL.DeltaTime;
+        }
+
+        if (FL.GetKeyUp('R')) {
+            renderNormals = !renderNormals;
+        }
+
+        if (FL.GetKeyUp(' ')) {
+            float aspectRatio = (float)FL.Width / FL.Height;
+            float uvx = (2f * (FL.Width / 2 + 0.5f) / FL.Width - 1f) * aspectRatio;
+            float uvy = 1f - 2f * (FL.Height / 2 + 0.5f) / FL.Height;
+            int ind = TraceRay(camPos, Vector3.Normalize(Vector3.Transform(new(uvx, uvy, -1f), yawPitchMatrix))).ObjectInd;
+            if (ind < _spheres.Length) {
+                _spheres[ind].Pos.X = camPos.X;
+                _spheres[ind].Pos.Z = camPos.Z;
+                Console.WriteLine($"{_spheres[ind].Pos.X}, {_spheres[ind].Pos.Z}");
+            }
         }
     }
 
@@ -159,14 +172,16 @@ internal sealed class Raytracer {
             return FL.Black;
         }
 
-        // Vector3 normalColor = Vector3.One * 0.5f;
+        if (renderNormals) {
+            Vector3 normalColor = Vector3.Zero;
 
-        // HitPayload payload = TraceRay(rayOrigin, rayDir);
-        // if (payload.HitDist != -1f) {
-        //     normalColor = (Vector3.Normalize(payload.WorldNormal) + Vector3.One) * 0.5f;
-        // }
+            HitPayload payload = TraceRay(rayOrigin, rayDir);
+            if (payload.HitDist != -1f) {
+                normalColor = (Vector3.Normalize(payload.WorldNormal) + Vector3.One) * 0.5f;
+            }
 
-        // return FL.NewColor(normalColor);
+            return FL.NewColor(normalColor);
+        }
 
         Vector3 light = Vector3.Zero;
         Vector3 contribution = Vector3.One;
@@ -182,8 +197,8 @@ internal sealed class Raytracer {
             int ind = payload.ObjectInd;
             Material mat = _materials[ind < _spheres.Length ? _spheres[ind].MatInd : _aabbs[ind - _spheres.Length].MatInd];
             
-            light += mat.Emission * contribution;
             contribution *= mat.Albedo;
+            light += mat.Emission * contribution;
 
             rayDir = Vector3.Lerp(
                 Vector3.Normalize(payload.WorldNormal + FL.RandInUnitSphere()) * mat.Roughness, 
@@ -276,12 +291,13 @@ internal sealed class Raytracer {
 
             float maxAbs = MathF.Max(MathF.Abs(hitPointLocal.X / extents.X), MathF.Max(MathF.Abs(hitPointLocal.Y / extents.Y), MathF.Abs(hitPointLocal.Z / extents.Z)));
 
-            if (MathF.Abs(hitPointLocal.X / extents.X) == maxAbs)
+            if (MathF.Abs(hitPointLocal.X / extents.X) == maxAbs) {
                 normal = new Vector3(MathF.Sign(hitPointLocal.X), 0, 0);
-            else if (MathF.Abs(hitPointLocal.Y / extents.Y) == maxAbs)
+            } else if (MathF.Abs(hitPointLocal.Y / extents.Y) == maxAbs) {
                 normal = new Vector3(0, MathF.Sign(hitPointLocal.Y), 0);
-            else
+            } else {
                 normal = new Vector3(0, 0, MathF.Sign(hitPointLocal.Z));
+            }
         }
 
         payload.WorldPos = hitPoint;
