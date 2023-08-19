@@ -8,6 +8,6 @@ A raytracer made with Fraglib in C#. Not realtime as everything is done on the C
 
 ![image](https://github.com/cyprus327/FL-Raytracer/assets/76965606/878516d3-050b-42f2-bb7d-cb3b57ee45fa)
 
-![image](https://github.com/cyprus327/FL-Raytracer/assets/76965606/7e95561a-372f-462c-b559-6af84b1f7310)
+![image](https://github.com/cyprus327/FL-Raytracer/assets/76965606/5da1e3c2-9e71-4e51-bdf6-3d7db8aa18b7)
 
 ![image](https://github.com/cyprus327/FL-Raytracer/assets/76965606/21e5df4f-4f16-4185-b812-f901e758b249)
