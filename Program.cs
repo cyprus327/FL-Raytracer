@@ -1,4 +1,4 @@
-﻿using Fraglib;
+using Fraglib;
 using System.Numerics;
 
 internal sealed class Raytracer {
@@ -10,120 +10,135 @@ internal sealed class Raytracer {
     private static bool renderNormals = true;
 
     private static readonly Sphere[] _spheres = {
-        new Sphere() {
-            Pos = new(-0.1f, -0.35f, -1.1f),
-            Radius = 0.35f,
-            MatInd = 1
+        new() {
+            Pos = new(-0.8f, -0.2f, 0.4f),
+            Radius = 0.8f,
+            MatInd = 7
         },
-        new Sphere() {
+        // new() {
+        //     Pos = new(0.3f, -0.8f, 0.2f),
+        //     Radius = 0.2f,
+        //     MatInd = 4
+        // },
+        // new() {
+        //     Pos = new(-1.5f, -0.3f, 0.6f),
+        //     Radius = 1.2f,
+        //     MatInd = 1
+        // },
+
+        new() {
             Pos = new(0f, 1000f, 0f),
             Radius = 1000f,
             MatInd = 3
         },
-        new Sphere() {
+        new() {
             Pos = new(1001.5f, 0f, 0f),
             Radius = 1000f,
             MatInd = 4
         },
-        new Sphere() {
-            Pos = new(0f, 0f, 1001.5f),
+        new() {
+            Pos = new(0f, 0f, 1003f),
             Radius = 1000f,
             MatInd = 3
         },
-        new Sphere() {
-            Pos = new(-1001.5f, 0f, 0f),
+        new() {
+            Pos = new(-1003f, 0f, 0f),
             Radius = 1000f,
             MatInd = 5
         },
-        new Sphere() {
-            Pos = new(0f, 0f, -1001.5f),
+        new() {
+            Pos = new(0f, 0f, -1003f),
             Radius = 1000f,
             MatInd = 3
         },
-        new Sphere() {
-            Pos = new(0f, -802.5f, 0f),
+        new() {
+            Pos = new(0f, -804f, 0f),
             Radius = 800.0035f,
-            MatInd = 6
+            MatInd = 3
         }
     };
 
     private static readonly AABB[] _aabbs = {
-        new AABB() {
+        new() {
             Min = new(0.9f, 0.1f, -0.6f),
             Max = new(1.1f, -1.5f, 0.4f),
-            MatInd = 0
+            MatInd = 1
         },
-        new AABB() {
-            Min = new(-0.9f, 0.1f, 0.6f),
-            Max = new(-1.1f, -1.5f, -0.4f),
-            MatInd = 0
-        }
     };
 
     private static readonly Material[] _materials = {
-        new Material() {
+        new() {
             Albedo = new(0.95f, 0.71f, 0.76f),
             Metallic = 0.9f,
             Roughness = 0.1f,
         },
-        new Material() {
+        new() {
             Albedo = new(0.62f, 0.87f, 0.64f),
             Metallic = 0.5f,
             Roughness = 0.5f,
         },
-        new Material() {
+        new() {
             Albedo = new(0.95f, 0.91f, 0.55f),
             Metallic = 0.1f,
             Roughness = 0.9f,
         },
-        new Material() {
+        new() {
             Albedo = new(0.9f, 0.9f, 0.9f),
             Metallic = 0.05f,
             Roughness = 0.95f,
         },
-        new Material() {
+        new() {
             Albedo = new(1f, 0.7f, 0.2f),
             Metallic = 0.2f,
             Roughness = 0.8f,
         },
-        new Material() {
+        new() {
             Albedo = new(0.2f, 0.4f, 0.9f),
             Metallic = 0.2f,
             Roughness = 0.8f,
         },
-        new Material() {
+
+        new() {
+            Albedo = Vector3.One,
+            EmissionStrength = 0.1f
+        },
+        new() {
             Albedo = Vector3.One,
             EmissionStrength = 1f
         }
     };
 
     public static void Main() {
-        Vector3 centerPoint = Vector3.Zero;
-        Vector3 referencePoint = new(0f, -1.25f, 0f);
-        Vector3 rotationAxis = Vector3.Normalize(referencePoint - centerPoint);
+        // Vector3 centerPoint = Vector3.Zero;
+        // Vector3 referencePoint = new(0f, -1.25f, 0f);
+        // Vector3 rotationAxis = Vector3.Normalize(referencePoint - centerPoint);
+        // Matrix4x4 rotMat = Matrix4x4.CreateFromAxisAngle(rotationAxis, MathF.PI / 4f);
+        // _spheres[2].Pos = Vector3.Transform(_spheres[2].Pos - centerPoint, rotMat) + centerPoint;
+        // _spheres[3].Pos = Vector3.Transform(_spheres[3].Pos - centerPoint, rotMat) + centerPoint;
+        // _spheres[4].Pos = Vector3.Transform(_spheres[4].Pos - centerPoint, rotMat) + centerPoint;
+        // _spheres[5].Pos = Vector3.Transform(_spheres[5].Pos - centerPoint, rotMat) + centerPoint;
 
-        Matrix4x4 rotMat = Matrix4x4.CreateFromAxisAngle(rotationAxis, MathF.PI / 4f);
-
-        _spheres[2].Pos = Vector3.Transform(_spheres[2].Pos - centerPoint, rotMat) + centerPoint;
-        _spheres[3].Pos = Vector3.Transform(_spheres[3].Pos - centerPoint, rotMat) + centerPoint;
-        _spheres[4].Pos = Vector3.Transform(_spheres[4].Pos - centerPoint, rotMat) + centerPoint;
-        _spheres[5].Pos = Vector3.Transform(_spheres[5].Pos - centerPoint, rotMat) + centerPoint;
-
-        FL.VSync = false;
+        FL.Settings.VSync = false;
+        FL.Settings.TargetFramerate = 144;
         FL.Init(800, 450, "Raytracer", PerPixel, PerFrame);
         FL.Run();
     }
 
     public static void PerFrame() {
         if (!FL.RMBDown()) {
-            FL.Accumulate = true;
+            FL.Settings.Accumulate = true;
             return;
         }
 
         yaw -= FL.MouseDelta.X * 0.005f;
         pitch += FL.MouseDelta.Y * 0.005f;
         pitch = Math.Clamp(pitch, -MAX_PITCH, MAX_PITCH);
-        FL.Accumulate = false;
+        FL.Settings.Accumulate = false;
+
+        const int STR_SIZE = 4;
+        const string STR = "WASD to move,\nR to switch modes.";
+        FL.DrawString(STR, 12, FL.Height - 32, STR_SIZE, FL.Black);
+        FL.DrawString(STR, 10, FL.Height - 30, STR_SIZE, FL.White);
 
         const float SPEED = 2f;
         yawPitchMatrix = Matrix4x4.CreateFromYawPitchRoll(yaw, pitch, 0f);
@@ -145,18 +160,6 @@ internal sealed class Raytracer {
 
         if (FL.GetKeyUp('R')) {
             renderNormals = !renderNormals;
-        }
-
-        if (FL.GetKeyUp(' ')) {
-            float aspectRatio = (float)FL.Width / FL.Height;
-            float uvx = (2f * (FL.Width / 2 + 0.5f) / FL.Width - 1f) * aspectRatio;
-            float uvy = 1f - 2f * (FL.Height / 2 + 0.5f) / FL.Height;
-            int ind = TraceRay(camPos, Vector3.Normalize(Vector3.Transform(new(uvx, uvy, -1f), yawPitchMatrix))).ObjectInd;
-            if (ind < _spheres.Length) {
-                _spheres[ind].Pos.X = camPos.X;
-                _spheres[ind].Pos.Z = camPos.Z;
-                Console.WriteLine($"{_spheres[ind].Pos.X}, {_spheres[ind].Pos.Z}");
-            }
         }
     }
 
@@ -186,11 +189,11 @@ internal sealed class Raytracer {
         Vector3 light = Vector3.Zero;
         Vector3 contribution = Vector3.One;
 
-        const int BOUNCES = 12;
+        const int BOUNCES = 16;
         for (int i = 0; i < BOUNCES; i++) {
             HitPayload payload = TraceRay(rayOrigin, rayDir);
             if (payload.HitDist == -1f) {
-                light += new Vector3(0.2f, 0.4f, rayDir.Y * 0.5f + 0.5f) * contribution;
+                //light += new Vector3(0.2f, 0.4f, rayDir.Y * 0.5f + 0.5f) * contribution;
                 break;
             }
 
